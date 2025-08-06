@@ -1,0 +1,44 @@
+[
+  {
+    "model": "qwen3",
+    "bleu_score": 0.0025062031582993444,
+    "rouge_score": 0.12763903843268412,
+    "string_similarity_score": 0.12845728006029788
+  },
+  {
+    "model": "llama3.1",
+    "bleu_score": 0.0019566917548285434,
+    "rouge_score": 0.10063164780082073,
+    "string_similarity_score": 0.11954036242078146
+  },
+  {
+    "model": "medllama2",
+    "bleu_score": 0.000567463613639557,
+    "rouge_score": 0.00930116946894051,
+    "string_similarity_score": 0.007443723372199782
+  },
+  {
+    "model": "meditron",
+    "bleu_score": 0.0013386368905443902,
+    "rouge_score": 0.019662933429605747,
+    "string_similarity_score": 0.037736049202267655
+  },
+  {
+    "model": "deepseek-chat",
+    "bleu_score": 0.0027837640074303283,
+    "rouge_score": 0.13584299102694858,
+    "string_similarity_score": 0.13527483740181873
+  },
+  {
+    "model": "openbiollm",
+    "bleu_score": 0.0006930142578873936,
+    "rouge_score": 0.019417475728155338,
+    "string_similarity_score": 0.006404174573055033
+  },
+  {
+    "model": "deepseek-r1",
+    "bleu_score": 0.0009857944907596056,
+    "rouge_score": 0.05773671258525073,
+    "string_similarity_score": 0.0548942478731915
+  }
+]
