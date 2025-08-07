@@ -1,4 +1,5 @@
 import os
+import json
 
 from dotenv import load_dotenv
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
@@ -46,10 +47,9 @@ retriever = db.as_retriever(
 # )
 
 llm = ChatOllama(
-    model="alibayram/medgemma:latest",
+    model="qwen3:latest",
     base_url="http://localhost:11434"
 )
-
 
 # Contextualize question prompt
 # This system prompt helps the AI understand that it should reformulate the question
@@ -106,6 +106,70 @@ question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 # Create a retrieval chain that combines the history-aware retriever and the question answering chain
 rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
+def load_qa_data():
+    """从qa_data.json加载问答数据"""
+    qa_file_path = os.path.join(current_dir, "qa_data.json")
+    with open(qa_file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return data["qa_pairs"]
+
+def process_qa_pairs():
+    """处理所有问答对并保存结果"""
+    qa_pairs = load_qa_data()
+    results = []
+    
+    # 确保输出目录存在
+    output_dir = os.path.join(current_dir, "return_data", "rag_llm")
+    os.makedirs(output_dir, exist_ok=True)
+    output_file = os.path.join(output_dir, "qwen3_bge-m3_return.jsonl")
+    
+    print(f"开始处理 {len(qa_pairs)} 个问答对...")
+    
+    for i, qa_pair in enumerate(qa_pairs, 1):
+        question = qa_pair["question"]
+        expected_answer = qa_pair["answer"]
+        
+        print(f"处理第 {i}/{len(qa_pairs)} 个问题: {question[:50]}...")
+        
+        try:
+            # 使用RAG链处理问题
+            result = rag_chain.invoke({"input": question, "chat_history": []})
+            
+            # 获取检索到的上下文
+            retrieved_contexts = []
+            if "context" in result:
+                for doc in result["context"]:
+                    retrieved_contexts.append(doc.page_content)
+            
+            # 构建结果记录
+            result_record = {
+                "user_input": question,
+                "response": result["answer"],
+                "retrieved_contexts": expected_answer  # 使用qa_pairs中的answer作为retrieved_contexts
+            }
+            
+            results.append(result_record)
+            
+            # 实时写入JSONL文件
+            with open(output_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(result_record, ensure_ascii=False) + '\n')
+            
+            print(f"✓ 已完成第 {i} 个问题")
+            
+        except Exception as e:
+            print(f"✗ 处理第 {i} 个问题时出错: {str(e)}")
+            # 即使出错也记录一个空结果
+            result_record = {
+                "user_input": question,
+                "response": f"处理出错: {str(e)}",
+                "retrieved_contexts": expected_answer
+            }
+            with open(output_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(result_record, ensure_ascii=False) + '\n')
+    
+    print(f"处理完成！结果已保存到: {output_file}")
+    return results
+
 def single_turn_chat():
     print("你好，我是医疗问答AI! 请输入你的问题。")
     query = input("你: ")
@@ -115,4 +179,8 @@ def single_turn_chat():
     print(f"AI: {result['answer']}")
 
 if __name__ == "__main__":
-    single_turn_chat()
+    # 处理qa_data.json中的所有问答对
+    process_qa_pairs()
+    
+    # 如果需要交互式聊天，可以取消下面的注释
+    # single_turn_chat()
